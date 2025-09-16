@@ -1,21 +1,40 @@
-from django.contrib.auth import get_user_model
+from typing import List
+
+from django.contrib.auth.hashers import make_password
 from ninja import Router
-from ninja_jwt.tokens import RefreshToken
+from ninja.errors import HttpError
 
-from .schemas import UserCreateSchema, UserOutSchema, UserRegisterResponseSchema
+from .auth import Auth
+from .schemas import UserOutSchema, UserUpdateSchema
+from .services import UserCRUD
 
-User = get_user_model()
-router = Router(tags=["Auth"])
+router = Router(tags=["Users"])
 
 
-@router.post("/register", response=UserRegisterResponseSchema)
-def register(request, payload: UserCreateSchema):
-    user = User.objects.create_user(
-        username=payload.username, password=payload.password, bio=payload.bio or ""
-    )
-    refresh = RefreshToken.for_user(user)
-    return {
-        "user": user,
-        "access": str(refresh.access_token),
-        "refresh": str(refresh),
-    }
+@router.get("/", response=List[UserOutSchema])
+def list_users(request):
+    return UserCRUD.list()
+
+
+@router.get("/{user_id}", response=UserOutSchema)
+def get_user(request, user_id: int):
+    return UserCRUD.retrieve(user_id)
+
+
+@router.put("/{user_id}", response=UserOutSchema, auth=Auth())
+def update_user(request, user_id: int, payload: UserUpdateSchema):
+    if request.auth.id != user_id:
+        raise HttpError(403, "You can only update your own profile.")
+
+    data = payload.dict(exclude_unset=True)
+    if "password" in data:
+        data["password"] = make_password(data["password"])
+    return UserCRUD.update(request, user_id, data)
+
+
+@router.delete("/{user_id}", auth=Auth())
+def delete_user(request, user_id: int):
+    if request.auth.id != user_id:
+        raise HttpError(403, "You can only delete your own account.")
+    UserCRUD.delete(request, user_id)
+    return {"success": True}

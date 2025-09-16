@@ -1,4 +1,4 @@
-from core.services import BaseCRUD
+from src.core.services import BaseCRUD
 
 from .models import User
 from .schemas import UserCreateSchema, UserOutSchema, UserUpdateSchema

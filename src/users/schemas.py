@@ -7,7 +7,6 @@ from ninja import Schema
 class UserCreateSchema(Schema):
     username: str
     password: str
-    bio: Optional[str] = None
 
 
 class UserUpdateSchema(Schema):
@@ -24,7 +23,7 @@ class UserOutSchema(Schema):
     updated_at: datetime
 
 
-class UserRegisterResponseSchema(Schema):
+class UserLoginRegisterSchema(Schema):
     user: UserOutSchema
     access: str
     refresh: str
