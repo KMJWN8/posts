@@ -9,3 +9,7 @@ class CommentCRUD(BaseCRUD):
     create_schema = CommentCreateSchema
     update_schema = CommentUpdateSchema
     out_schema = CommentOutSchema
+
+    @classmethod
+    def get_queryset(cls):
+        return cls.model.objects.select_related("author", "article_author").all()

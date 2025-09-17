@@ -9,3 +9,8 @@ class ArticleCRUD(BaseCRUD):
     create_schema = ArticleCreateSchema
     update_schema = ArticleUpdateSchema
     out_schema = ArticleOutSchema
+
+    @classmethod
+    def get_queryset(cls):
+        # подгружаем автора чтобы избежать N+1 запрос
+        return cls.model.objects.select_related("author").all()

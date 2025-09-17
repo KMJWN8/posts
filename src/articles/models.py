@@ -1,9 +1,10 @@
 from django.db import models
 
+from src.core.models import TimestampedModel
 from src.users.models import User
 
 
-class Article(models.Model):
+class Article(TimestampedModel):
     title = models.CharField("title", max_length=200)
     content = models.TextField("content")
 
@@ -13,9 +14,6 @@ class Article(models.Model):
         related_name="articles",
         verbose_name="author",
     )
-
-    created_at = models.DateTimeField("created at", auto_now_add=True)
-    updated_at = models.DateTimeField("updated at", auto_now=True)
 
     class Meta:
         db_table = "articles"

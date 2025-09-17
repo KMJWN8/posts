@@ -1,3 +1,5 @@
+import jwt
+from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import make_password
 from ninja import Router
@@ -41,7 +43,7 @@ def login_user(request, username: str, password: str):
     return {"user": user, "access": str(refresh.access_token), "refresh": str(refresh)}
 
 
-@router.post("/token/refresh", response=TokenRefreshOutputSchema)
+@router.post("/token-refresh", response=TokenRefreshOutputSchema)
 def refresh_token(request, payload: TokenRefreshInputSchema):
     try:
         refresh = RefreshToken(payload.refresh)

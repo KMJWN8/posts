@@ -17,20 +17,23 @@ router = Router(auth=JWTAuth(), tags=["Comments"])
 
 @router.get("/", response=List[CommentOutSchema])
 def list_comments(request):
-    return CommentCRUD.list()
+    qs = CommentCRUD.list()
+    return [CommentOutSchema.from_orm(c) for c in qs]
 
 
 @router.get("/{comment_id}", response=CommentOutSchema)
 def get_comment(request, comment_id: int):
-    return CommentCRUD.retrieve(comment_id)
+    q = CommentCRUD.retrieve(comment_id)
+    return CommentOutSchema.from_orm(q)
 
 
 @router.post("/", response=CommentOutSchema)
 def create_comment(request, payload: CommentCreateSchema):
     data = payload.dict()
     data["article"] = get_object_or_404(Article, id=data.pop("article_id"))
-    data["author"] = request.user
-    return CommentCRUD.create(data)
+    data["author_id"] = request.user.id
+    obj = CommentCRUD.create(data)
+    return CommentOutSchema.from_orm(obj)
 
 
 @router.put("/{comment_id}", response=CommentOutSchema)
@@ -39,7 +42,8 @@ def update_comment(request, comment_id: int, payload: CommentUpdateSchema):
     if comment.author != request.user:
         raise PermissionDenied("You can only edit your own comments")
     data = payload.dict(exclude_unset=True)
-    return CommentCRUD.update(comment_id, data)
+    obj = CommentCRUD.update(comment_id, data)
+    return CommentOutSchema.from_orm(obj)
 
 
 @router.delete("/{comment_id}")

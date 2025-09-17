@@ -22,6 +22,9 @@ class UserOutSchema(Schema):
     created_at: datetime
     updated_at: datetime
 
+    class Config:
+        orm_mode = True
+
 
 class UserLoginRegisterSchema(Schema):
     user: UserOutSchema
