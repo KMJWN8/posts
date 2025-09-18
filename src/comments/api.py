@@ -16,14 +16,12 @@ router = Router(tags=["Comments"])
 
 @router.get("/", response=List[CommentOutSchema])
 def list_comments(request):
-    objs = CommentCRUD.list()
-    return [CommentOutSchema.from_orm(c) for c in objs]
+    return CommentCRUD.list()
 
 
 @router.get("/{comment_id}", response=CommentOutSchema)
 def get_comment(request, comment_id: int):
-    obj = CommentCRUD.retrieve(comment_id)
-    return CommentOutSchema.from_orm(obj)
+    return CommentCRUD.retrieve(comment_id)
 
 
 @router.post("/", response=CommentOutSchema, auth=jwt_auth)
@@ -31,8 +29,7 @@ def create_comment(request, payload: CommentCreateSchema):
     data = payload.dict()
     data["article"] = get_object_or_404(Article, id=data.pop("article_id"))
     data["author_id"] = request.user.id
-    obj = CommentCRUD.create(data)
-    return CommentOutSchema.from_orm(obj)
+    return CommentCRUD.create(data)
 
 
 @router.put("/{comment_id}", response=CommentOutSchema, auth=jwt_auth)
@@ -40,8 +37,7 @@ def update_comment(request, comment_id: int, payload: CommentUpdateSchema):
     comment = CommentCRUD.get_object(comment_id)
     check_ownership(comment.author, request.user)
     data = payload.dict(exclude_unset=True)
-    obj = CommentCRUD.update(comment_id, data)
-    return CommentOutSchema.from_orm(obj)
+    return CommentCRUD.update(comment_id, data)
 
 
 @router.delete("/{comment_id}", auth=jwt_auth)

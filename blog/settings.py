@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "ninja_jwt",
     "ninja_extra",
     "rest_framework",
+    "django_extensions",
     "src.core",
     "src.users",
     "src.articles",

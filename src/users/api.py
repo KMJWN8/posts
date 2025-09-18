@@ -12,7 +12,7 @@ from .services import UserCRUD
 router = Router(tags=["Users"])
 
 
-@router.get("/", response=List[UserOutSchema])
+@router.get("/", response=List[UserOutSchema], auth=jwt_auth)
 def list_users(request):
     return UserCRUD.list()
 
@@ -30,12 +30,12 @@ def update_user(request, user_id: int, payload: UserUpdateSchema):
     data = payload.dict(exclude_unset=True)
     if "password" in data:
         data["password"] = make_password(data["password"])
-    return UserCRUD.update(request, user_id, data)
+    return UserCRUD.update(user_id, data)
 
 
 @router.delete("/{user_id}", auth=jwt_auth)
 def delete_user(request, user_id: int):
     if request.auth.id != user_id:
         raise HttpError(403, "You can only delete your own account.")
-    UserCRUD.delete(request, user_id)
+    UserCRUD.delete(user_id)
     return {"success": True}

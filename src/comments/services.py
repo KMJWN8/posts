@@ -12,4 +12,4 @@ class CommentCRUD(BaseCRUD):
 
     @classmethod
     def get_queryset(cls):
-        return cls.model.objects.select_related("author", "article_author").all()
+        return cls.model.objects.select_related("article", "author").all()

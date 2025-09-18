@@ -4,6 +4,8 @@ from typing import Optional
 from ninja import Schema
 from pydantic import ConfigDict
 
+from src.users.schemas import UserOutSchema
+
 
 class ArticleCreateSchema(Schema):
     title: str
@@ -19,7 +21,7 @@ class ArticleOutSchema(Schema):
     id: int
     title: str
     content: str
-    author: str
+    author: UserOutSchema
     created_at: datetime
     updated_at: datetime
 
