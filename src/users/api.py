@@ -1,32 +1,24 @@
 from typing import List
 
-from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import make_password
 from ninja import Router
 from ninja.errors import HttpError
-from ninja_jwt.schema import TokenRefreshInputSchema, TokenRefreshOutputSchema
-from ninja_jwt.tokens import RefreshToken
 
 from src.core.auth import jwt_auth
 
-from .schemas import (
-    UserCreateSchema,
-    UserLoginRegisterSchema,
-    UserOutSchema,
-    UserUpdateSchema,
-)
+from .schemas import UserOutSchema, UserUpdateSchema
 from .services import UserCRUD
 
 router = Router(tags=["Users"])
 
 
 @router.get("/", response=List[UserOutSchema])
-def list_users():
+def list_users(request):
     return UserCRUD.list()
 
 
 @router.get("/{user_id}", response=UserOutSchema)
-def get_user(user_id: int):
+def get_user(request, user_id: int):
     return UserCRUD.retrieve(user_id)
 
 
@@ -47,40 +39,3 @@ def delete_user(request, user_id: int):
         raise HttpError(403, "You can only delete your own account.")
     UserCRUD.delete(request, user_id)
     return {"success": True}
-
-
-@router.post("/register", response=UserLoginRegisterSchema)
-def register_user(payload: UserCreateSchema):
-    data = payload.dict()
-    data["password"] = make_password(data["password"])
-
-    user = UserCRUD.create(data)
-
-    refresh = RefreshToken.for_user(user)
-    access = str(refresh.access_token)
-
-    return {
-        "user": user,
-        "access": access,
-        "refresh": str(refresh),
-    }
-
-
-@router.post("/login", response=UserLoginRegisterSchema)
-def login_user(username: str, password: str):
-    user = authenticate(username=username, password=password)
-    if not user:
-        raise HttpError(401, "Invalid username or password")
-
-    refresh = RefreshToken.for_user(user)
-    return {"user": user, "access": str(refresh.access_token), "refresh": str(refresh)}
-
-
-@router.post("/token-refresh", response=TokenRefreshOutputSchema)
-def refresh_token(payload: TokenRefreshInputSchema):
-    try:
-        refresh = RefreshToken(payload.refresh)
-        new_access = str(refresh.access_token)
-        return TokenRefreshOutputSchema(access=new_access)
-    except Exception as e:
-        raise e

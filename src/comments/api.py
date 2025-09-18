@@ -15,7 +15,7 @@ router = Router(tags=["Comments"])
 
 
 @router.get("/", response=List[CommentOutSchema])
-def list_comments():
+def list_comments(request):
     objs = CommentCRUD.list()
     return [CommentOutSchema.from_orm(c) for c in objs]
 

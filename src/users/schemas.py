@@ -24,9 +24,3 @@ class UserOutSchema(Schema):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class UserLoginRegisterSchema(Schema):
-    user: UserOutSchema
-    access: str
-    refresh: str

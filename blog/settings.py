@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "ninja",
     "ninja_jwt",
+    "ninja_extra",
+    "rest_framework",
     "src.core",
     "src.users",
     "src.articles",

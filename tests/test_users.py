@@ -1,54 +1,77 @@
-import pytest
+# tests/test_users.py
+from django.test import TestCase
+from rest_framework.test import APIClient
 
-pytestmark = pytest.mark.django_db
-
-
-def test_list_users(auth_client):
-    client, _ = auth_client
-    resp = client.get("/users/")
-    assert resp.status_code == 200
-    assert isinstance(resp.json(), list)
+from src.users.models import User
 
 
-def test_get_user(auth_client):
-    client, user = auth_client
-    resp = client.get(f"/users/{user.id}/")
-    assert resp.status_code == 200
-    assert resp.json()["id"] == user.id
+class UsersAPITestCase(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username="user1",
+            email="u1@example.com",
+            password="pass1234",
+            first_name="John",
+            bio="Old bio",
+        )
+        self.other_user = User.objects.create_user(
+            username="user2", email="u2@example.com", password="pass1234"
+        )
 
+        self.list_url = "/api/v1/users/"
+        self.detail_url = f"/api/v1/users/{self.user.id}/"
+        self.update_url = f"/api/v1/users/{self.user.id}/"
+        self.delete_url = f"/api/v1/users/{self.user.id}/"
 
-def test_update_user_success(auth_client):
-    client, user = auth_client
-    resp = client.put(
-        f"/users/{user.id}/", {"bio": "Updated"}, content_type="application/json"
-    )
-    assert resp.status_code == 200
-    assert resp.json()["bio"] == "Updated"
+    def test_list_users_authenticated_success(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(self.list_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertGreaterEqual(len(response.data), 1)
 
+    def test_list_users_unauthenticated_forbidden(self):
+        response = self.client.get(self.list_url)
+        self.assertEqual(response.status_code, 403)
 
-def test_update_user_forbidden(auth_client, create_user):
-    client, _ = auth_client
-    other = create_user(username="other")
-    # Создаём JWT для другого пользователя
-    resp = client.post("/auth/login/", {"username": "other", "password": "pass123"})
-    access = resp.json()["access"]
-    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access}"
-    # Пытаемся обновить чужой профиль
-    resp = client.put(f"/users/1/", {"bio": "Hack"}, content_type="application/json")
-    assert resp.status_code == 403
+    def test_retrieve_user_success(self):
+        response = self.client.get(self.detail_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["username"], "user1")
 
+    def test_update_user_own_profile_success(self):
+        self.client.force_authenticate(user=self.user)
+        data = {"first_name": "Johnny", "bio": "New bio"}
+        response = self.client.put(self.update_url, data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["first_name"], "Johnny")
+        self.assertEqual(response.data["bio"], "New bio")
 
-def test_delete_user_success(auth_client):
-    client, user = auth_client
-    resp = client.delete(f"/users/{user.id}/")
-    assert resp.status_code == 200
+    def test_update_user_other_profile_forbidden(self):
+        self.client.force_authenticate(user=self.other_user)
+        data = {"first_name": "Hacker"}
+        response = self.client.put(self.update_url, data)
+        self.assertEqual(response.status_code, 403)
 
+    def test_update_user_password_updates_hash(self):
+        old_hash = self.user.password
+        self.client.force_authenticate(user=self.user)
+        data = {"password": "newpass5678"}
+        response = self.client.put(self.update_url, data)
+        self.assertEqual(response.status_code, 200)
 
-def test_delete_user_forbidden(auth_client, create_user):
-    client, user = auth_client
-    other = create_user(username="other")
-    resp = client.post("/auth/login/", {"username": "other", "password": "pass123"})
-    access = resp.json()["access"]
-    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access}"
-    resp = client.delete(f"/users/{user.id}/")
-    assert resp.status_code == 403
+        self.user.refresh_from_db()
+        self.assertNotEqual(self.user.password, old_hash)
+
+    def test_delete_user_own_account_success(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.delete(self.delete_url)
+        self.assertEqual(response.status_code, 200)
+        with self.assertRaises(User.DoesNotExist):
+            User.objects.get(id=self.user.id)
+
+    def test_delete_user_other_account_forbidden(self):
+        self.client.force_authenticate(user=self.other_user)
+        response = self.client.delete(self.detail_url)
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(User.objects.filter(id=self.user.id).exists())
