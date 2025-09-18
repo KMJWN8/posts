@@ -2,10 +2,9 @@
 
 from typing import Any, Dict, Iterable, Type, TypeVar
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied
 from django.db import models
 from django.http import Http404
-from pydantic import BaseModel
 
 M = TypeVar("M", bound=models.Model)
 
@@ -57,7 +56,6 @@ class BaseCRUD:
     @classmethod
     def update(cls, pk: int, data: Dict[str, Any], user: Any = None) -> M:
         instance = cls.get_object(pk)
-        # Hook: если у объекта есть поле author и пользователь не совпадает — можно проверять вне CRUD
         allowed = cls._allowed_fields()
         for key, value in data.items():
             if key in allowed:
@@ -70,3 +68,8 @@ class BaseCRUD:
     def delete(cls, pk: int, user: Any = None) -> None:
         instance = cls.get_object(pk)
         instance.delete()
+
+
+def check_ownership(rhs, lhs):
+    if rhs != lhs:
+        raise PermissionDenied()

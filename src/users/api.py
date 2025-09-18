@@ -21,12 +21,12 @@ router = Router(tags=["Users"])
 
 
 @router.get("/", response=List[UserOutSchema])
-def list_users(request):
+def list_users():
     return UserCRUD.list()
 
 
 @router.get("/{user_id}", response=UserOutSchema)
-def get_user(request, user_id: int):
+def get_user(user_id: int):
     return UserCRUD.retrieve(user_id)
 
 
@@ -50,7 +50,7 @@ def delete_user(request, user_id: int):
 
 
 @router.post("/register", response=UserLoginRegisterSchema)
-def register_user(request, payload: UserCreateSchema):
+def register_user(payload: UserCreateSchema):
     data = payload.dict()
     data["password"] = make_password(data["password"])
 
@@ -67,7 +67,7 @@ def register_user(request, payload: UserCreateSchema):
 
 
 @router.post("/login", response=UserLoginRegisterSchema)
-def login_user(request, username: str, password: str):
+def login_user(username: str, password: str):
     user = authenticate(username=username, password=password)
     if not user:
         raise HttpError(401, "Invalid username or password")
@@ -77,10 +77,10 @@ def login_user(request, username: str, password: str):
 
 
 @router.post("/token-refresh", response=TokenRefreshOutputSchema)
-def refresh_token(request, payload: TokenRefreshInputSchema):
+def refresh_token(payload: TokenRefreshInputSchema):
     try:
         refresh = RefreshToken(payload.refresh)
         new_access = str(refresh.access_token)
         return TokenRefreshOutputSchema(access=new_access)
-    except Exception:
-        raise HttpError(401, "Token is invalid or expired")
+    except Exception as e:
+        raise e

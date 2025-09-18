@@ -1,5 +1,3 @@
-# apps/comments/api.py
-
 from typing import List
 
 from django.core.exceptions import PermissionDenied
@@ -8,6 +6,7 @@ from ninja import Router
 
 from src.articles.models import Article
 from src.core.auth import jwt_auth
+from src.core.services import check_ownership
 
 from .schemas import CommentCreateSchema, CommentOutSchema, CommentUpdateSchema
 from .services import CommentCRUD
@@ -16,15 +15,15 @@ router = Router(tags=["Comments"])
 
 
 @router.get("/", response=List[CommentOutSchema])
-def list_comments(request):
-    qs = CommentCRUD.list()
-    return [CommentOutSchema.from_orm(c) for c in qs]
+def list_comments():
+    objs = CommentCRUD.list()
+    return [CommentOutSchema.from_orm(c) for c in objs]
 
 
 @router.get("/{comment_id}", response=CommentOutSchema)
 def get_comment(request, comment_id: int):
-    q = CommentCRUD.retrieve(comment_id)
-    return CommentOutSchema.from_orm(q)
+    obj = CommentCRUD.retrieve(comment_id)
+    return CommentOutSchema.from_orm(obj)
 
 
 @router.post("/", response=CommentOutSchema, auth=jwt_auth)
@@ -39,8 +38,7 @@ def create_comment(request, payload: CommentCreateSchema):
 @router.put("/{comment_id}", response=CommentOutSchema, auth=jwt_auth)
 def update_comment(request, comment_id: int, payload: CommentUpdateSchema):
     comment = CommentCRUD.get_object(comment_id)
-    if comment.author != request.user:
-        raise PermissionDenied("You can only edit your own comments")
+    check_ownership(comment.author, request.user)
     data = payload.dict(exclude_unset=True)
     obj = CommentCRUD.update(comment_id, data)
     return CommentOutSchema.from_orm(obj)
@@ -49,7 +47,6 @@ def update_comment(request, comment_id: int, payload: CommentUpdateSchema):
 @router.delete("/{comment_id}", auth=jwt_auth)
 def delete_comment(request, comment_id: int):
     comment = CommentCRUD.get_object(comment_id)
-    if comment.author != request.user:
-        raise PermissionDenied("You can only delete your own comments")
+    check_ownership(comment.author, request.user)
     CommentCRUD.delete(comment_id)
     return {"success": True}

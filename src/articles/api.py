@@ -1,9 +1,9 @@
 from typing import List
 
-from django.core.exceptions import PermissionDenied
 from ninja import Router
 
 from src.core.auth import jwt_auth
+from src.core.services import check_ownership
 
 from .schemas import ArticleCreateSchema, ArticleOutSchema, ArticleUpdateSchema
 from .services import ArticleCRUD
@@ -34,16 +34,15 @@ def create_article(request, payload: ArticleCreateSchema):
 @router.put("/{article_id}", response=ArticleOutSchema, auth=jwt_auth)
 def update_article(request, article_id: int, payload: ArticleUpdateSchema):
     article = ArticleCRUD.get_object(article_id)
-    if article.author != request.user:
-        raise PermissionDenied("You can only edit your own articles")
+    check_ownership(article.author, request.user)
     data = payload.dict(exclude_unset=True)
     obj = ArticleCRUD.update(article_id, data, user=request.user)
+    return ArticleOutSchema.from_orm(obj)
 
 
 @router.delete("/{article_id}", auth=jwt_auth)
 def delete_article(request, article_id: int):
     article = ArticleCRUD.get_object(article_id)
-    if article.author != request.user:
-        raise PermissionDenied("You can only delete your own articles")
+    check_ownership(article.author, request.user)
     ArticleCRUD.delete(article_id, user=request.user)
     return {"success": True}
