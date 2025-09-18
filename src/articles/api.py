@@ -2,12 +2,13 @@ from typing import List
 
 from django.core.exceptions import PermissionDenied
 from ninja import Router
-from ninja_jwt.authentication import JWTAuth
+
+from src.core.auth import jwt_auth
 
 from .schemas import ArticleCreateSchema, ArticleOutSchema, ArticleUpdateSchema
 from .services import ArticleCRUD
 
-router = Router(auth=JWTAuth(), tags=["Articles"])
+router = Router(tags=["Articles"])
 
 
 @router.get("/", response=List[ArticleOutSchema])
@@ -22,7 +23,7 @@ def get_article(request, article_id: int):
     return ArticleOutSchema.from_orm(obj)
 
 
-@router.post("/", response=ArticleOutSchema)
+@router.post("/", response=ArticleOutSchema, auth=jwt_auth)
 def create_article(request, payload: ArticleCreateSchema):
     data = payload.dict()
     data["author_id"] = request.user.id
@@ -30,7 +31,7 @@ def create_article(request, payload: ArticleCreateSchema):
     return ArticleOutSchema.from_orm(obj)
 
 
-@router.put("/{article_id}", response=ArticleOutSchema)
+@router.put("/{article_id}", response=ArticleOutSchema, auth=jwt_auth)
 def update_article(request, article_id: int, payload: ArticleUpdateSchema):
     article = ArticleCRUD.get_object(article_id)
     if article.author != request.user:
@@ -39,7 +40,7 @@ def update_article(request, article_id: int, payload: ArticleUpdateSchema):
     obj = ArticleCRUD.update(article_id, data, user=request.user)
 
 
-@router.delete("/{article_id}")
+@router.delete("/{article_id}", auth=jwt_auth)
 def delete_article(request, article_id: int):
     article = ArticleCRUD.get_object(article_id)
     if article.author != request.user:

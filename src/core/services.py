@@ -11,13 +11,10 @@ M = TypeVar("M", bound=models.Model)
 
 
 class BaseCRUD:
-    """Базовый CRUD-класс. Наследники должны указать model и (опционально) override get_queryset()."""
-
     model: Type[M] = None
 
     @classmethod
     def get_queryset(cls):
-        # По умолчанию — все объекты. Наследники могут переопределить и добавить select_related/prefetch.
         return cls.model.objects.all()
 
     @classmethod
