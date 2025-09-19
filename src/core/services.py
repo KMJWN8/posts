@@ -1,5 +1,4 @@
-# apps/common/crud_base.py
-
+import logging
 from typing import Any, Dict, Iterable, Type, TypeVar
 
 from django.core.exceptions import PermissionDenied
@@ -7,6 +6,8 @@ from django.db import models
 from django.http import Http404
 
 M = TypeVar("M", bound=models.Model)
+
+logger = logging.getLogger("src.core.crud")
 
 
 class BaseCRUD:
@@ -21,15 +22,19 @@ class BaseCRUD:
         try:
             return cls.get_queryset().get(pk=pk)
         except cls.model.DoesNotExist:
+            logger.warning(f"{cls.model.__name__} with ID={pk} not found.")
             raise Http404(f"{cls.model.__name__} not found")
 
     @classmethod
     def list(cls) -> Iterable[M]:
+        logger.info(f"Listing {cls.model.__name__}")
         return cls.get_queryset()
 
     @classmethod
     def retrieve(cls, pk: int) -> M:
-        return cls.get_object(pk)
+        instance = cls.get_object(pk)
+        logger.info(f"Retrieved {cls.model.__name__} ID={pk}")
+        return instance
 
     @classmethod
     def _allowed_fields(cls) -> set:
@@ -51,6 +56,9 @@ class BaseCRUD:
         instance = cls.model(**filtered)
         instance.full_clean()
         instance.save()
+        logger.info(
+            f"Created {cls.model.__name__} ID={instance.pk} by user ID={data.get('author') or 'unknown'}"
+        )
         return instance
 
     @classmethod
@@ -62,11 +70,17 @@ class BaseCRUD:
                 setattr(instance, key, value)
         instance.full_clean()
         instance.save()
+        user_id = getattr(user, "id", "unknown")
+        logger.info(
+            f"Updated {cls.model.__name__} ID={pk}. Changed: {data}. By user ID={user_id}"
+        )
         return instance
 
     @classmethod
     def delete(cls, pk: int, user: Any = None) -> None:
         instance = cls.get_object(pk)
+        user_id = getattr(user, "id", "unknown")
+        logger.warning(f"Deleting {cls.model.__name__} ID={pk} by user ID={user_id}")
         instance.delete()
 
 

@@ -1,6 +1,5 @@
 from typing import List
 
-from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from ninja import Router
 

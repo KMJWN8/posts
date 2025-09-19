@@ -142,3 +142,74 @@ NINJA_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 }
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
+        },
+        "detailed": {
+            "format": "{levelname} {asctime} {name} {module} {funcName} line:{lineno} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+        "file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": BASE_DIR / "logs" / "django.log",
+            "formatter": "detailed",
+        },
+        "auth_file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": BASE_DIR / "logs" / "auth.log",
+            "formatter": "detailed",
+        },
+        "security": {
+            "level": "WARNING",
+            "class": "logging.FileHandler",
+            "filename": BASE_DIR / "logs" / "security.log",
+            "formatter": "detailed",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "src.users.auth": {
+            "handlers": ["auth_file", "console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "src.articles.crud": {
+            "handlers": ["file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "src.comments.crud": {
+            "handlers": ["file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django.security": {
+            "handlers": ["security"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+    },
+}

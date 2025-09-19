@@ -1,0 +1,12 @@
+INFO 2025-09-19 14:22:05,352 django.utils.autoreload autoreload run_with_reloader line:667 Watching for file changes with StatReloader
+INFO 2025-09-19 14:30:03,884 django.utils.autoreload autoreload run_with_reloader line:667 Watching for file changes with StatReloader
+INFO 2025-09-19 14:31:00,036 django.utils.autoreload autoreload trigger_reload line:265 /home/saryglar311/Projects/blog_project/src/core/auth.py changed, reloading.
+INFO 2025-09-19 14:31:01,485 django.utils.autoreload autoreload run_with_reloader line:667 Watching for file changes with StatReloader
+INFO 2025-09-19 14:39:41,465 django.utils.autoreload autoreload run_with_reloader line:667 Watching for file changes with StatReloader
+INFO 2025-09-19 14:40:04,313 django.utils.autoreload autoreload run_with_reloader line:667 Watching for file changes with StatReloader
+INFO 2025-09-19 14:40:18,138 django.server basehttp log_message line:213 "GET /api/v1/docs HTTP/1.1" 200 610
+INFO 2025-09-19 14:40:18,200 django.server basehttp log_message line:213 "GET /static/ninja/swagger-ui-init.js HTTP/1.1" 200 1308
+INFO 2025-09-19 14:40:18,215 django.server basehttp log_message line:213 "GET /static/ninja/swagger-ui.css HTTP/1.1" 200 151211
+INFO 2025-09-19 14:40:18,237 django.server basehttp log_message line:213 "GET /static/ninja/swagger-ui-bundle.js HTTP/1.1" 200 1385226
+INFO 2025-09-19 14:40:19,107 django.server basehttp log_message line:213 "GET /api/v1/openapi.json HTTP/1.1" 200 11269
+INFO 2025-09-19 14:40:19,118 django.server basehttp log_message line:213 "GET /static/ninja/favicon.png HTTP/1.1" 200 6234
