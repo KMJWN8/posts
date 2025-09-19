@@ -14,6 +14,9 @@ class UserUpdateSchema(Schema):
     username: Optional[str] = None
     password: Optional[str] = None
     bio: Optional[str] = None
+    email: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
 
 
 class UserOutSchema(Schema):
