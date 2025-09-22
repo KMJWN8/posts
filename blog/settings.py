@@ -191,6 +191,11 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
+        "django.request": {
+            "handlers": [],
+            "level": "WARNING",
+            "propagate": False,  # ← ВАЖНО: отключаем стандартное логирование запросов
+        },
         "src.users.auth": {
             "handlers": ["auth_file", "console"],
             "level": "INFO",
@@ -203,6 +208,11 @@ LOGGING = {
         },
         "src.comments.crud": {
             "handlers": ["file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "src.core.api": {
+            "handlers": ["auth_file", "console"],
             "level": "INFO",
             "propagate": False,
         },
