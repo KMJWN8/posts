@@ -1,84 +1,88 @@
 import logging
 
-from django.contrib.auth import get_user_model
+from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.signals import user_logged_in, user_logged_out
-from django.dispatch import Signal
 from django.http import HttpRequest
 from ninja_extra import api_controller, http_post
 from ninja_jwt.authentication import JWTAuth
-from ninja_jwt.schema import TokenObtainPairOutputSchema, TokenRefreshOutputSchema
+from ninja_jwt.schema import (
+    TokenObtainPairInputSchema,
+    TokenObtainPairOutputSchema,
+    TokenRefreshInputSchema,
+    TokenRefreshOutputSchema,
+)
+from ninja_jwt.tokens import RefreshToken
 
-# Настройка логгера
+from src.users.schemas import UserCreateSchema
+
+from .schemas import ErrorSchema, RegisterSuccessSchema
+
 logger = logging.getLogger("src.users.auth")
 
 jwt_auth = JWTAuth()
-
-# Кастомные сигналы для JWT (опционально, если хотите отделить от стандартных)
-jwt_user_login = Signal()
-jwt_user_logout = Signal()
-
 User = get_user_model()
 
 
-@api_controller("/auth/jwt")
+@api_controller("/auth", tags=["Auth"])
 class CustomAuthController:
-    @http_post(
-        "/login",
-        response=TokenObtainPairOutputSchema,
-    )
-    def login(self, request: HttpRequest):
-        from ninja_jwt.schema import TokenObtainPairSerializer
+    @http_post("/login", response=TokenObtainPairOutputSchema, auth=None)
+    def login(self, request: HttpRequest, data: TokenObtainPairInputSchema):
+        user = authenticate(username=data.username, password=data.password)
+        if not user:
+            return 401, {"detail": "Invalid credentials"}
 
-        # Получаем данные из запроса
-        serializer = TokenObtainPairSerializer(data=request.data)
-        if not serializer.is_valid():
-            logger.warning(
-                f"Failed login attempt with data: {request.data.get('username')}"
-            )
-            return {"detail": "Invalid credentials"}, 401
+        refresh = RefreshToken.for_user(user)
 
-        user = serializer.user
-        tokens = serializer.validated_data
-
-        # Отправляем стандартный сигнал Django
         user_logged_in.send(sender=User, request=request, user=user)
+        logger.info(f"User '{user.username}' (ID: {user.id}) logged.")
 
-        # Отправляем кастомный сигнал (если слушаете где-то ещё)
-        jwt_user_login.send(sender=self.__class__, user=user, request=request)
+        return {
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+            "username": data.username,
+        }
 
-        # Логируем успешный вход
-        logger.info(f"User '{user.username}' (ID: {user.id}) logged in via JWT.")
+    @http_post(
+        "/register",
+        response={
+            201: RegisterSuccessSchema,
+            400: ErrorSchema,
+            500: ErrorSchema,
+        },
+        auth=None,
+    )
+    def register(self, request: HttpRequest, data: UserCreateSchema):
+        if User.objects.filter(username=data.username).exists():
+            return 400, {"detail": "Username already exists"}
 
-        return tokens
+        try:
+            user = User.objects.create_user(
+                username=data.username, password=data.password
+            )
 
-    @http_post("/refresh", response=TokenRefreshOutputSchema)
-    def refresh_token(self, request):
-        from ninja_jwt.schema import RefreshTokenSerializer
+            logger.info(f"New user '{user.username}' registered and logged in")
+            return 201, {"success": True, "message": "User registered successfully"}
 
-        serializer = RefreshTokenSerializer(data=request.data)
-        if not serializer.is_valid():
-            return {"detail": "Invalid refresh token"}, 401
+        except Exception as e:
+            logger.error(f"Registration failed for {data.username}: {str(e)}")
+            return 500, {"detail": "Registration failed"}
 
-        return serializer.validated_data
+    @http_post("/refresh", response=TokenRefreshOutputSchema, auth=None)
+    def refresh_token(self, request, data: TokenRefreshInputSchema):
+        refresh_token = RefreshToken(data.refresh)
+        access_token = str(refresh_token.access_token)
 
-    @http_post("/verify", auth=None)
-    def verify_token(self, request):
-        # Токен уже проверен через auth=None + валидация в NinjaJWT
-        return {"message": "Token is valid"}
+        return {
+            "refresh": str(refresh_token),
+            "access": access_token,
+        }
 
-    @http_post("/logout", auth=None)
+    @http_post("/logout", auth=jwt_auth)
     def logout(self, request):
         """
-        Условный logout. На бэкенде JWT не хранится,
-        но мы можем залогировать попытку выхода.
+        Условный logout с логированием аутентифицированного пользователя
         """
-        if hasattr(request, "user") and request.user.is_authenticated:
-            user = request.user
-            # Отправляем сигнал
-            user_logged_out.send(sender=User, request=request, user=user)
-            jwt_user_logout.send(sender=self.__class__, user=user, request=request)
-            logger.info(f"User '{user.username}' (ID: {user.id}) logged out.")
-        else:
-            logger.info("Anonymous user attempted logout.")
-
+        user = request.user
+        user_logged_out.send(sender=User, request=request, user=user)
+        logger.info(f"User '{user.username}' (ID: {user.id}) logged out.")
         return {"success": True}

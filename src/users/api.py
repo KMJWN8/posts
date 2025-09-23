@@ -2,9 +2,9 @@ from typing import List
 
 from django.contrib.auth.hashers import make_password
 from ninja import Router
-from ninja.errors import HttpError
 
 from src.core.auth import jwt_auth
+from src.core.services import check_ownership
 
 from .schemas import UserOutSchema, UserUpdateSchema
 from .services import UserCRUD
@@ -24,9 +24,7 @@ def get_user(request, user_id: int):
 
 @router.put("/{user_id}", response=UserOutSchema, auth=jwt_auth)
 def update_user(request, user_id: int, payload: UserUpdateSchema):
-    if request.auth.id != user_id:
-        raise HttpError(403, "You can only update your own profile.")
-
+    check_ownership(request.auth.id, user_id)
     data = payload.dict(exclude_unset=True)
     if "password" in data:
         data["password"] = make_password(data["password"])
@@ -35,7 +33,6 @@ def update_user(request, user_id: int, payload: UserUpdateSchema):
 
 @router.delete("/{user_id}", auth=jwt_auth)
 def delete_user(request, user_id: int):
-    if request.auth.id != user_id:
-        raise HttpError(403, "You can only delete your own account.")
+    check_ownership(request.auth.id, user_id)
     UserCRUD.delete(user_id)
     return {"success": True}

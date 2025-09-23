@@ -1,4 +1,3 @@
-# tests/test_users.py
 from django.test import TestCase
 from ninja_jwt.tokens import AccessToken
 from rest_framework.test import APIClient

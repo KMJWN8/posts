@@ -23,9 +23,7 @@ def get_article(request, article_id: int):
 
 @router.post("/", response=ArticleOutSchema, auth=jwt_auth)
 def create_article(request, payload: ArticleCreateSchema):
-    data = payload.dict()
-    data["author_id"] = request.user.id
-    return ArticleCRUD.create(data)
+    return ArticleCRUD.create({**payload.dict(), "author_id": request.user.id})
 
 
 @router.put("/{article_id}", response=ArticleOutSchema, auth=jwt_auth)
