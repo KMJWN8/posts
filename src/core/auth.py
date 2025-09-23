@@ -3,8 +3,10 @@ import logging
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.http import HttpRequest
+from ninja.errors import HttpError
 from ninja_extra import api_controller, http_post
 from ninja_jwt.authentication import JWTAuth
+from ninja_jwt.exceptions import TokenError
 from ninja_jwt.schema import (
     TokenObtainPairInputSchema,
     TokenObtainPairOutputSchema,
@@ -29,7 +31,7 @@ class CustomAuthController:
     def login(self, request: HttpRequest, data: TokenObtainPairInputSchema):
         user = authenticate(username=data.username, password=data.password)
         if not user:
-            return 401, {"detail": "Invalid credentials"}
+            raise HttpError(401, "Invalid credentials")
 
         refresh = RefreshToken.for_user(user)
 
@@ -44,16 +46,12 @@ class CustomAuthController:
 
     @http_post(
         "/register",
-        response={
-            201: RegisterSuccessSchema,
-            400: ErrorSchema,
-            500: ErrorSchema,
-        },
+        response={200: RegisterSuccessSchema, 201: RegisterSuccessSchema},
         auth=None,
     )
     def register(self, request: HttpRequest, data: UserCreateSchema):
         if User.objects.filter(username=data.username).exists():
-            return 400, {"detail": "Username already exists"}
+            raise HttpError(400, "Username already exists")
 
         try:
             user = User.objects.create_user(
@@ -65,17 +63,24 @@ class CustomAuthController:
 
         except Exception as e:
             logger.error(f"Registration failed for {data.username}: {str(e)}")
-            return 500, {"detail": "Registration failed"}
+            raise HttpError(500, "Registration failed")
 
-    @http_post("/refresh", response=TokenRefreshOutputSchema, auth=None)
+    @http_post(
+        "/refresh",
+        response=TokenRefreshOutputSchema,
+        auth=None,
+    )
     def refresh_token(self, request, data: TokenRefreshInputSchema):
-        refresh_token = RefreshToken(data.refresh)
-        access_token = str(refresh_token.access_token)
+        try:
+            refresh_token = RefreshToken(data.refresh)
+            access_token = str(refresh_token.access_token)
 
-        return {
-            "refresh": str(refresh_token),
-            "access": access_token,
-        }
+            return {
+                "refresh": str(refresh_token),
+                "access": access_token,
+            }
+        except TokenError:
+            raise HttpError(401, "Invalid refresh token")
 
     @http_post("/logout", auth=jwt_auth)
     def logout(self, request):

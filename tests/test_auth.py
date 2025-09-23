@@ -13,10 +13,10 @@ class AuthAPITestCase(TestCase):
             password="testpass123",
         )
 
-        self.login_url = "/api/v1/auth/login/"
-        self.register_url = "/api/v1/auth/register/"
-        self.refresh_url = "/api/v1/auth/refresh/"
-        self.logout_url = "/api/v1/auth/logout/"
+        self.login_url = "/api/v1/auth/login"
+        self.register_url = "/api/v1/auth/register"
+        self.refresh_url = "/api/v1/auth/refresh"
+        self.logout_url = "/api/v1/auth/logout"
 
     def test_login_success(self):
         """Успешный логин"""
@@ -38,7 +38,13 @@ class AuthAPITestCase(TestCase):
             format="json",
         )
         self.assertEqual(response.status_code, 401)
-        self.assertEqual(response.json(), {"detail": "Invalid credentials"})
+        self.assertEqual(
+            response.json(),
+            {
+                "code": "authentication_failed",
+                "detail": "No active account found with the given credentials",
+            },
+        )
 
     def test_register_success(self):
         """Успешная регистрация"""
@@ -55,7 +61,7 @@ class AuthAPITestCase(TestCase):
         """Регистрация с уже существующим username"""
         response = self.client.post(
             self.register_url,
-            {"username": "testuser", "password": "newpass123"},  # уже существует
+            {"username": "testuser", "password": "newpass123"},
             format="json",
         )
         self.assertEqual(response.status_code, 400)
