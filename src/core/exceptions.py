@@ -6,7 +6,7 @@ from ninja.errors import HttpError
 from ninja_extra import NinjaExtraAPI
 from ninja_jwt.exceptions import InvalidToken, TokenError
 
-logger = logging.getLogger("src.core.api")
+logger = logging.getLogger("src.core.exceptions")
 
 
 def configure_exception_handlers(api: NinjaExtraAPI):

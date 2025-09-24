@@ -7,7 +7,7 @@ from django.http import Http404
 
 M = TypeVar("M", bound=models.Model)
 
-logger = logging.getLogger("src.core.crud")
+logger = logging.getLogger("src.core.services")
 
 
 class BaseCRUD:
@@ -49,20 +49,29 @@ class BaseCRUD:
         return names
 
     @classmethod
+    def _mask_sensitive_data(cls, data: Dict[str, Any]) -> Dict[str, Any]:
+        masked = {}
+        for k, v in data.items():
+            if k.lower() == "password":
+                masked[k] = "[REDACTED]"
+            else:
+                masked[k] = v
+        return masked
+
+    @classmethod
     def create(cls, data: Dict[str, Any]) -> M:
-        # фильтруем лишние поля
         allowed = cls._allowed_fields()
         filtered = {k: v for k, v in data.items() if k in allowed}
         instance = cls.model(**filtered)
         instance.full_clean()
         instance.save()
         logger.info(
-            f"Created {cls.model.__name__} ID={instance.pk} by user ID={data.get('author') or 'unknown'}"
+            f"Created {cls.model.__name__} ID={instance.pk} by user ID={data.get('author_id')}"
         )
         return instance
 
     @classmethod
-    def update(cls, pk: int, data: Dict[str, Any], user: Any = None) -> M:
+    def update(cls, pk: int, data: Dict[str, Any], user_id: int = None) -> M:
         instance = cls.get_object(pk)
         allowed = cls._allowed_fields()
         for key, value in data.items():
@@ -70,17 +79,18 @@ class BaseCRUD:
                 setattr(instance, key, value)
         instance.full_clean()
         instance.save()
-        user_id = getattr(user, "id", "unknown")
+        safe_data = cls._mask_sensitive_data(data)
         logger.info(
-            f"Updated {cls.model.__name__} ID={pk}. Changed: {data}. By user ID={user_id}"
+            f"Updated {cls.model.__name__} ID={pk}. Changed: {safe_data}. By user ID={user_id or pk}"
         )
         return instance
 
     @classmethod
-    def delete(cls, pk: int, user: Any = None) -> None:
+    def delete(cls, pk: int, user_id: int = None) -> None:
         instance = cls.get_object(pk)
-        user_id = getattr(user, "id", "unknown")
-        logger.warning(f"Deleting {cls.model.__name__} ID={pk} by user ID={user_id}")
+        logger.warning(
+            f"Deleting {cls.model.__name__} ID={pk} by user ID={user_id or pk}"
+        )
         instance.delete()
 
 

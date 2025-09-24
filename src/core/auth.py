@@ -17,9 +17,9 @@ from ninja_jwt.tokens import RefreshToken
 
 from src.users.schemas import UserCreateSchema
 
-from .schemas import ErrorSchema, RegisterSuccessSchema
+from .schemas import RegisterSuccessSchema
 
-logger = logging.getLogger("src.users.auth")
+logger = logging.getLogger("src.core.auth")
 
 jwt_auth = JWTAuth()
 User = get_user_model()
@@ -84,9 +84,6 @@ class CustomAuthController:
 
     @http_post("/logout", auth=jwt_auth)
     def logout(self, request):
-        """
-        Условный logout с логированием аутентифицированного пользователя
-        """
         user = request.user
         user_logged_out.send(sender=User, request=request, user=user)
         logger.info(f"User '{user.username}' (ID: {user.id}) logged out.")

@@ -21,7 +21,6 @@ class ArticlesAPITestCase(TestCase):
             author=self.user,
         )
 
-        # Генерируем токен для автора
         token = AccessToken.for_user(self.user)
         self.auth_headers = {"HTTP_AUTHORIZATION": f"Bearer {token}"}
 
@@ -53,7 +52,7 @@ class ArticlesAPITestCase(TestCase):
     def test_create_article_unauthenticated_forbidden(self):
         data = {"title": "No Auth", "content": "Should fail"}
         response = self.client.post(self.list_url, data, format="json")
-        self.assertEqual(response.status_code, 401)  # jwt_auth → 401
+        self.assertEqual(response.status_code, 401)
 
     def test_update_article_owner_success(self):
         data = {"title": "Updated Title"}
@@ -66,7 +65,6 @@ class ArticlesAPITestCase(TestCase):
         self.assertEqual(self.article.title, "Updated Title")
 
     def test_update_article_non_owner_allowed_but_not_applied(self):
-        # Логиним другого пользователя
         other_token = AccessToken.for_user(self.other_user)
         other_headers = {"HTTP_AUTHORIZATION": f"Bearer {other_token}"}
 

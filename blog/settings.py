@@ -178,10 +178,10 @@ LOGGING = {
             "filename": BASE_DIR / "logs" / "auth.log",
             "formatter": "detailed",
         },
-        "security": {
-            "level": "WARNING",
+        "crud_file": {
+            "level": "INFO",
             "class": "logging.FileHandler",
-            "filename": BASE_DIR / "logs" / "security.log",
+            "filename": BASE_DIR / "logs" / "crud.log",
             "formatter": "detailed",
         },
     },
@@ -194,31 +194,21 @@ LOGGING = {
         "django.request": {
             "handlers": [],
             "level": "WARNING",
-            "propagate": False,  # ← ВАЖНО: отключаем стандартное логирование запросов
+            "propagate": False,
         },
-        "src.users.auth": {
+        "src.core.auth": {
             "handlers": ["auth_file", "console"],
             "level": "INFO",
             "propagate": False,
         },
-        "src.articles.crud": {
-            "handlers": ["file"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "src.comments.crud": {
-            "handlers": ["file"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "src.core.api": {
+        "src.core.exceptions": {
             "handlers": ["auth_file", "console"],
             "level": "INFO",
             "propagate": False,
         },
-        "django.security": {
-            "handlers": ["security"],
-            "level": "WARNING",
+        "src.core.services": {
+            "handlers": ["crud_file", "console"],
+            "level": "INFO",
             "propagate": False,
         },
     },

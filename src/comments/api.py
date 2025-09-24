@@ -36,12 +36,12 @@ def update_comment(request, comment_id: int, payload: CommentUpdateSchema):
     comment = CommentCRUD.get_object(comment_id)
     check_ownership(comment.author, request.user)
     data = payload.dict(exclude_unset=True)
-    return CommentCRUD.update(comment_id, data)
+    return CommentCRUD.update(comment_id, data, comment.author.id)
 
 
 @router.delete("/{comment_id}", auth=jwt_auth)
 def delete_comment(request, comment_id: int):
     comment = CommentCRUD.get_object(comment_id)
     check_ownership(comment.author, request.user)
-    CommentCRUD.delete(comment_id)
+    CommentCRUD.delete(comment_id, comment.author.id)
     return {"success": True}
