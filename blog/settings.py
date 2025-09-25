@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
+    "django.contrib.staticfiles",
     "ninja",
     "ninja_jwt",
     "ninja_extra",
@@ -127,6 +128,9 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
+
+STATIC_URL = "/static/"
+STATIC_ROOT = "/app/staticfiles"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = "/app/mediafiles"
