@@ -64,7 +64,7 @@ class ArticlesAPITestCase(TestCase):
         self.article.refresh_from_db()
         self.assertEqual(self.article.title, "Updated Title")
 
-    def test_update_article_non_owner_allowed_but_not_applied(self):
+    def test_update_article_non_owner_forbidden(self):
         other_token = AccessToken.for_user(self.other_user)
         other_headers = {"HTTP_AUTHORIZATION": f"Bearer {other_token}"}
 
