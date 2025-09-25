@@ -16,6 +16,8 @@ services:
     restart: always
     volumes:
       - .:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/mediafiles
     ports:
       - "8000:8000"
     depends_on:
@@ -28,16 +30,19 @@ services:
       - DJANGO_DB_PORT=5432
 
   nginx:
-    image: nginx:alpine
+    image: nginx:1.29.1-alpine
     restart: always
     ports:
       - "80:80"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d
+      - static_volume:/app/staticfiles
       - media_volume:/app/mediafiles
     depends_on:
       - backend
 
 volumes:
   pgdata:
+  static_volume:
   media_volume:
+
