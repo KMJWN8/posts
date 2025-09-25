@@ -13,4 +13,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["sh", "-c", "python3 manage.py collectstatic --noinput && python3 manage.py migrate && gunicorn --bind 0.0.0.0:8000 blog.wsgi:application"]
+CMD ["sh", "-c", "python3 manage.py migrate && gunicorn --bind 0.0.0.0:8000 blog.wsgi:application"]
