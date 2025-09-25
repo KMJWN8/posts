@@ -27,5 +27,17 @@ services:
       - DJANGO_DB_PASSWORD=mypassword
       - DJANGO_DB_PORT=5432
 
+  nginx:
+    image: nginx:1.25.3-alpine
+    restart: always
+    ports:
+      -"80:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - media_volume:/app/mediafiles
+    depends_on:
+      - backend
+
 volumes:
   pgdata:
+  media_volume:

@@ -28,6 +28,8 @@ class UsersAPITestCase(TestCase):
         self.delete_url = f"/api/v1/users/{self.user.id}"
 
     def test_list_users_authenticated_success(self):
+        self.user.is_staff = True
+        self.user.save()
         response = self.client.get(self.list_url, **self.auth_headers)
         self.assertEqual(response.status_code, 200)
         self.assertGreaterEqual(len(response.json()), 1)

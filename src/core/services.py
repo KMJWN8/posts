@@ -38,11 +38,10 @@ class BaseCRUD:
 
     @classmethod
     def _allowed_fields(cls) -> set:
-        # поля модели, которые можно изменять через CRUD (имена полей в модели и *_id для FK)
         names = {
             f.name for f in cls.model._meta.get_fields() if getattr(f, "editable", True)
         }
-        # добавить *_id для FK
+
         for f in cls.model._meta.fields:
             if f.many_to_one or f.one_to_one:
                 names.add(f.name + "_id")
