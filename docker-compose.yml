@@ -15,6 +15,7 @@ services:
     build: .
     restart: always
     volumes:
+      - .:/app
       - static_volume:/app/staticfiles
       - media_volume:/app/mediafiles
     ports:
