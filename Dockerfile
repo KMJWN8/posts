@@ -2,9 +2,6 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-ENV HTTP_PROXY=http://10.0.219.4:1118
-ENV HTTPS_PROXY=http://10.0.219.4:1118
-
 COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
