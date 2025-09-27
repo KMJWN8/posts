@@ -10,6 +10,8 @@ COPY . .
 
 RUN mkdir -p staticfiles
 
+RUN mkdir -p logs
+
 RUN python3 manage.py collectstatic --noinput
 
 EXPOSE 8000
